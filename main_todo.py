@@ -95,15 +95,15 @@ class TaskActions:
     #     end_date
 
     def read_all_tasks(self):
-        tasks_by_uuid = {}                              # słownik
+        tasks_by_id = {}                              # słownik
         with open(self.file_path, 'r') as file:
             while True:
                 single_task_str = file.readline()
                 if single_task_str == '':
                     break
                 deserialized_task = Task.deserialize(single_task_str)
-                tasks_by_uuid [deserialized_task.id] = deserialized_task
-        return tasks_by_uuid
+                tasks_by_id [deserialized_task.id] = deserialized_task
+        return tasks_by_id
 
     def add_task(self, new_task: Task):
         with open(self.file_path, 'a') as file:
@@ -135,9 +135,9 @@ class TaskActions:
 
             elif choice == 2:                           # Zobacz aktywne zadania
                 while True:
-                    task_dict_by_uuid = self.read_all_tasks()
-                    active_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE, task_dict_by_uuid.values()))
-        # alternatywnie:  active_tasks_list = [single for single in task_dict_by_uuid.values() if single.status == Status.ACTIVE]
+                    task_dict_by_id = self.read_all_tasks()
+                    active_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE, task_dict_by_id.values()))
+        # alternatywnie:  active_tasks_list = [single for single in task_dict_by_id.values() if single.status == Status.ACTIVE]
 
                     for index, single in enumerate(active_tasks_list):  #numeruje poszczególne obiekty typu Task
                         print(index+1)
@@ -152,50 +152,45 @@ class TaskActions:
                     else:
                         try:
                             task_index_choice = int(task_choice) -1
-                            single_task_uuid = active_tasks_list[task_index_choice].id  # wyciąga id zadania, które zostało wybrane
-                            continue
+                            single_task_id = active_tasks_list[task_index_choice].id  # wyciąga id zadania, które zostało wybrane
+
                             # przenosi do kolejnego menu
                         except:
                             print('To nie jest poprawna komenda.')
+                            continue
+
+
+                        single_task_action_choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n '
+                                                 '1 - Oznacz zadanie jako wykonane. \n '
+                                                 '2 - Zmień szczegóły zadania. \n'
+                                                 '3 - Usuń zadanie. \n'
+                                                 '4 - Wróć. \n'))
+
+                        if single_task_action_choice == 1:   #oznacz jako wykonane
+
+                            task = task_dict_by_id[single_task_id]
+                            task_dict_by_id[single_task_id] = task.copy(status = Status.DONE)
+
+
+                        elif single_task_action_choice == 2:  #zmień szczeczóły
+
+
+                        elif single_task_action_choice == 3:    #usuń zadanie
+
+                        elif single_task_action_choice == 4:
                             break
 
 
 
+            elif choice == 3:
+                task_dict_by_id = self.read_all_tasks()
+                for single in task_dict_by_id:
+                    if single.status != Status.ACTIVE:
+                        print (print_task(single))
+                continue
 
-
-
-# TODO wyszukuje odpowiednie zadanie po id w task_list
-
-            single_task_action_choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n '
-                                     '1 - Oznacz zadanie jako wykonane. \n '
-                                     '2 - Zmień szczegóły zadania. \n'
-                                     '3 - Usuń zadanie. \n'
-                                     '4 - Wróć. \n'))
-
-            # if single_task_action_choice == 1:
-            #
-            #     status = Status.DONE
-            #
-            # elif single_task_action_choice == 2:
-            #
-            #
-            # elif single_task_action_choice == 3:
-            #
-            # elif single_task_action_choice == 4:
-            #     return False
-
-
-            # return True
-
-                elif choice == 3:
-                    task_dict_by_uuid = self.read_all_tasks()
-                    for single in task_dict_by_uuid:
-                        if single.status != Status.ACTIVE:
-                            print (print_task(single))
-                    continue
-
-                elif choice == 4:
-                    break  # Wyjdź
+            elif choice == 4:
+                break  # Wyjdź
 
 
 
