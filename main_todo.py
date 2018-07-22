@@ -4,7 +4,7 @@ from enum import Enum
 import uuid
 
 
-def parse_date(date: str):
+def parse_date(date: str):   #zamienia str daty na datetime
     return datetime.datetime.strptime(date, '%Y-%m-%d')
 
 
@@ -109,6 +109,11 @@ class TaskActions:
         with open(self.file_path, 'a') as file:
             file.write(new_task.serialize() + '\n')
 
+    def save_dict(self, update_dict):
+        with open(self.file_path, 'w') as file:
+            for dict_task in update_dict.values():
+                file.write(dict_task.serialize() + '\n')
+
 
 
     def menu(self):
@@ -168,25 +173,54 @@ class TaskActions:
 
                         if single_task_action_choice == 1:   #oznacz jako wykonane
 
-                            task = task_dict_by_id[single_task_id]
-                            task_dict_by_id[single_task_id] = task.copy(status = Status.DONE)
+                            update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
+                            task_dict_by_id[single_task_id] = update_task.copy(status=Status.DONE)
+                            self.save_dict(task_dict_by_id)
+                            break
 
 
                         elif single_task_action_choice == 2:  #zmień szczeczóły
+                            changes_menu = int(input('1 - Zmień nazwę zadania. \n'
+                                      '2 - Zmień opis zadania. \n'
+                                      '3 - Zmień datę zakończenia. \n'
+                                      '4 - Wróć. \n'))
 
+                            update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
 
-                        elif single_task_action_choice == 3:    #usuń zadanie
+                            if changes_menu == 1:
+                                new_name = input('Podaj nową nazwę: \n')
+                                task_dict_by_id[single_task_id] = update_task.copy(name=new_name)
+                                self.save_dict(task_dict_by_id)
+                                continue
 
+                            elif changes_menu == 2:
+                                new_description = input('Podaj nowy opis: \n')
+                                task_dict_by_id[single_task_id] = update_task.copy(description=new_description)
+                                self.save_dict(task_dict_by_id)
+                                continue
+
+                            elif changes_menu == 3:
+                                new_end_date = input('Podaj datę zakończenia: \n')
+                                task_dict_by_id[single_task_id] = update_task.copy(end_date=parse_date(new_end_date))
+                                self.save_dict(task_dict_by_id)
+                                continue
+
+                            else:
+                                break
+
+                        # elif single_task_action_choice == 3:    #usuń zadanie
+                        #
                         elif single_task_action_choice == 4:
                             break
 
 
 
-            elif choice == 3:
+            elif choice == 3:   #archiwum zadań
                 task_dict_by_id = self.read_all_tasks()
-                for single in task_dict_by_id:
-                    if single.status != Status.ACTIVE:
-                        print (print_task(single))
+                tasks_archive = list(filter(lambda single:single.status != Status.ACTIVE, task_dict_by_id.values()))
+                for index, single in enumerate(tasks_archive):
+                    print(index + 1)
+                    print(print_task(single))
                 continue
 
             elif choice == 4:
@@ -204,4 +238,4 @@ if __name__ == '__main__':
         pass
 
 # TODO action.update_status
-# TODO numerki
+
