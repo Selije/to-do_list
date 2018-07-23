@@ -73,7 +73,7 @@ class Status(Enum):
     ACTIVE = 1
     DONE = 2
     EXPIRED = 3
-    CANCELED = 4
+    # CANCELED = 4
 
     def __str__(self):
         if self == Status.ACTIVE:
@@ -82,27 +82,50 @@ class Status(Enum):
             return 'ZROBIONE'
         elif self == Status.EXPIRED:
             return 'PO TERMINIE'
-        elif self == Status.CANCELED:
-            return 'ANULOWANE'
+        # elif self == Status.CANCELED:
+        #     return 'ANULOWANE'
 
 
 class TaskActions:
     def __init__(self, file_path):
         self.file_path = file_path
+        self.tasks_by_id = self.read_all_tasks()
 
-    # def update_status(self):
-    #     current_time = datetime.datetime.now
-    #     end_date
+
+
+
+
+
+    def update_status(self):
+        current_time = datetime.datetime.now()
+        task_dict_by_id = self.tasks_by_id
+        expired_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE and
+                                                        single.end_date < current_time, task_dict_by_id.values()))
+        for single in expired_tasks_list:
+            task_dict_by_id[single.id] = single.copy(status=Status.EXPIRED)
+            self.save_dict(task_dict_by_id)
+
+
+
+
+
+
+
+
 
     def read_all_tasks(self):
         tasks_by_id = {}                              # słownik
-        with open(self.file_path, 'r') as file:
-            while True:
-                single_task_str = file.readline()
-                if single_task_str == '':
-                    break
-                deserialized_task = Task.deserialize(single_task_str)
-                tasks_by_id [deserialized_task.id] = deserialized_task
+        try:
+            with open(self.file_path, 'r') as file:
+                while True:
+                    single_task_str = file.readline()
+                    if single_task_str == '':
+                        break
+                    deserialized_task = Task.deserialize(single_task_str)
+                    tasks_by_id [deserialized_task.id] = deserialized_task
+        except:
+            with open(self.file_path, 'w'):
+                pass
         return tasks_by_id
 
     def add_task(self, new_task: Task):
@@ -129,7 +152,7 @@ class TaskActions:
                 current_time = datetime.datetime.now()
                 end_date_input = input('Podaj datę zakończenia (rrrr-mm-dd):')
                 end_date = parse_date(end_date_input)
-                status = Status.ACTIVE
+                status = Status.ACTIVE or Status.EXPIRED
                 id = uuid.uuid4()
 
                 new_task = Task(name, description, current_time, end_date, status, id)
@@ -140,8 +163,8 @@ class TaskActions:
 
             elif choice == 2:                           # Zobacz aktywne zadania
                 while True:
-                    task_dict_by_id = self.read_all_tasks()
-                    active_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE, task_dict_by_id.values()))
+                    task_dict_by_id = self.tasks_by_id
+                    active_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE or Status.EXPIRED, task_dict_by_id.values()))
         # alternatywnie:  active_tasks_list = [single for single in task_dict_by_id.values() if single.status == Status.ACTIVE]
 
                     for index, single in enumerate(active_tasks_list):  #numeruje poszczególne obiekty typu Task
@@ -216,8 +239,8 @@ class TaskActions:
 
 
             elif choice == 3:   #archiwum zadań
-                task_dict_by_id = self.read_all_tasks()
-                tasks_archive = list(filter(lambda single:single.status != Status.ACTIVE, task_dict_by_id.values()))
+
+                tasks_archive = list(filter(lambda single:single.status != Status.ACTIVE, self.tasks_by_id.values()))
                 for index, single in enumerate(tasks_archive):
                     print(index + 1)
                     print(print_task(single))
@@ -233,7 +256,7 @@ class TaskActions:
 if __name__ == '__main__':
     file_path = input('Podaj ścieżkę do pliku z zadaniami.\n')
     actions = TaskActions(file_path)
-    #    actions.update_status()
+    actions.update_status()
     while actions.menu():
         pass
 
