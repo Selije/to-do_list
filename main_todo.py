@@ -15,7 +15,7 @@ def format_date(date: datetime.datetime):
 def print_task(task):
     return f'Nazwa zadania: {task.name},\n' \
         f'opis zadania: {task.description},\n' \
-        f'data dodania: {format_date(task.current_time)},\n ' \
+        f'data dodania: {format_date(task.current_time)},\n' \
         f'data zakończenia: {format_date(task.end_date)},\n' \
         f'STATUS: {task.status}.'
 
@@ -143,8 +143,10 @@ class TaskActions:
 
         while True:
             choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n' + \
-                               ' 1 - Dodaj nowe zadanie.\n 2 - Zobacz aktywne zadania.\n' + \
-                               ' 3 - Archiwum zadań.\n 4 - Wyjdź.\n'))
+                               ' 1 - Dodaj nowe zadanie.\n '
+                               ' 2 - Zobacz aktywne zadania.\n'
+                               ' 3 - Archiwum zadań.\n '
+                               ' 4 - Wyjdź.\n'))
 
             if choice == 1:                             #Dodaj nowe zadanie
                 name = input('Podaj nazwę zadania.\n')
@@ -190,10 +192,10 @@ class TaskActions:
 
 
                         single_task_action_choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n '
-                                                 '1 - Oznacz zadanie jako wykonane. \n '
-                                                 '2 - Zmień szczegóły zadania. \n'
-                                                 '3 - Usuń zadanie. \n'
-                                                 '4 - Wróć. \n'))
+                                                 ' 1 - Oznacz zadanie jako wykonane. \n '
+                                                 ' 2 - Zmień szczegóły zadania. \n'
+                                                 ' 3 - Usuń zadanie. \n'
+                                                 ' 4 - Wróć. \n'))
 
                         if single_task_action_choice == 1:   #oznacz jako wykonane
 
@@ -204,10 +206,10 @@ class TaskActions:
 
 
                         elif single_task_action_choice == 2:  #zmień szczeczóły
-                            changes_menu = int(input('1 - Zmień nazwę zadania. \n'
-                                      '2 - Zmień opis zadania. \n'
-                                      '3 - Zmień datę zakończenia. \n'
-                                      '4 - Wróć. \n'))
+                            changes_menu = int(input(' 1 - Zmień nazwę zadania. \n'
+                                      ' 2 - Zmień opis zadania. \n'
+                                      ' 3 - Zmień datę zakończenia. \n'
+                                      ' 4 - Wróć. \n'))
 
                             update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
 
@@ -234,7 +236,7 @@ class TaskActions:
 
                         elif single_task_action_choice == 3:    #usuń zadanie
                             update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
-                            del task_dict_by_id[update_task]
+                            del task_dict_by_id[update_task.id]
                             self.save_dict()
                             break
 
@@ -265,5 +267,4 @@ if __name__ == '__main__':
     while actions.menu():
         pass
 
-# TODO action.update_status
 
