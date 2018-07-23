@@ -103,7 +103,7 @@ class TaskActions:
                                                         single.end_date < current_time, task_dict_by_id.values()))
         for single in expired_tasks_list:
             task_dict_by_id[single.id] = single.copy(status=Status.EXPIRED)
-            self.save_dict(task_dict_by_id)
+            self.save_dict()
 
 
 
@@ -132,9 +132,9 @@ class TaskActions:
         with open(self.file_path, 'a') as file:
             file.write(new_task.serialize() + '\n')
 
-    def save_dict(self, update_dict):
+    def save_dict(self):
         with open(self.file_path, 'w') as file:
-            for dict_task in update_dict.values():
+            for dict_task in self.tasks_by_id.values():
                 file.write(dict_task.serialize() + '\n')
 
 
@@ -152,11 +152,12 @@ class TaskActions:
                 current_time = datetime.datetime.now()
                 end_date_input = input('Podaj datę zakończenia (rrrr-mm-dd):')
                 end_date = parse_date(end_date_input)
-                status = Status.ACTIVE or Status.EXPIRED
+                status = Status.ACTIVE
                 id = uuid.uuid4()
 
                 new_task = Task(name, description, current_time, end_date, status, id)
-                self.add_task(new_task)
+                self.tasks_by_id[new_task.id] = new_task
+                self.save_dict()
 
                 continue
 
@@ -198,7 +199,7 @@ class TaskActions:
 
                             update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
                             task_dict_by_id[single_task_id] = update_task.copy(status=Status.DONE)
-                            self.save_dict(task_dict_by_id)
+                            self.save_dict()
                             break
 
 
@@ -213,26 +214,30 @@ class TaskActions:
                             if changes_menu == 1:
                                 new_name = input('Podaj nową nazwę: \n')
                                 task_dict_by_id[single_task_id] = update_task.copy(name=new_name)
-                                self.save_dict(task_dict_by_id)
+                                self.save_dict()
                                 continue
 
                             elif changes_menu == 2:
                                 new_description = input('Podaj nowy opis: \n')
                                 task_dict_by_id[single_task_id] = update_task.copy(description=new_description)
-                                self.save_dict(task_dict_by_id)
+                                self.save_dict()
                                 continue
 
                             elif changes_menu == 3:
                                 new_end_date = input('Podaj datę zakończenia: \n')
                                 task_dict_by_id[single_task_id] = update_task.copy(end_date=parse_date(new_end_date))
-                                self.save_dict(task_dict_by_id)
+                                self.save_dict()
                                 continue
 
                             else:
                                 break
 
-                        # elif single_task_action_choice == 3:    #usuń zadanie
-                        #
+                        elif single_task_action_choice == 3:    #usuń zadanie
+                            update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
+                            del task_dict_by_id[update_task]
+                            self.save_dict()
+                            break
+
                         elif single_task_action_choice == 4:
                             break
 
@@ -240,7 +245,7 @@ class TaskActions:
 
             elif choice == 3:   #archiwum zadań
 
-                tasks_archive = list(filter(lambda single:single.status != Status.ACTIVE, self.tasks_by_id.values()))
+                tasks_archive = list(filter(lambda single:single.status != Status.ACTIVE or Status.EXPIRED, self.tasks_by_id.values()))
                 for index, single in enumerate(tasks_archive):
                     print(index + 1)
                     print(print_task(single))
