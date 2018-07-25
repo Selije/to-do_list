@@ -92,8 +92,13 @@ class TaskActions:
         task_dict_by_id = self.tasks_by_id
         expired_tasks_list = list(filter(lambda single: single.status == Status.ACTIVE and
                                                         single.end_date < current_time, task_dict_by_id.values()))
+        reactivated_tasks_list = list(filter(lambda single: single.status == Status.EXPIRED and
+                                                            single.end_date > current_time, task_dict_by_id.values()))
         for single in expired_tasks_list:
             task_dict_by_id[single.id] = single.copy(status=Status.EXPIRED)
+            self.save_dict()
+        for single in reactivated_tasks_list:
+            task_dict_by_id[single.id] = single.copy(status=Status.ACTIVE)
             self.save_dict()
 
 
@@ -122,7 +127,105 @@ class TaskActions:
                 file.write(dict_task.serialize() + '\n')
 
 
-    def choice_menu_lvl_1(self):
+    def handle_task_adding(self):
+        name = input('Podaj nazwę zadania.\n')
+        description = input('Opisz zadanie.\n')
+        current_time = datetime.datetime.now()
+        end_date_input = input('Podaj datę zakończenia (rrrr-mm-dd): \n')
+        end_date = parse_date(end_date_input)
+        status = Status.ACTIVE
+        id = uuid.uuid4()
+
+        new_task = Task(name, description, current_time, end_date, status, id)
+        self.tasks_by_id[new_task.id] = new_task
+        self.save_dict()
+
+    def handle_task_body(self):
+        while True:
+            task_dict_by_id = self.tasks_by_id
+            active_tasks_list = list(
+                filter(lambda single: (single.status == Status.ACTIVE) or (single.status == Status.EXPIRED),
+                       task_dict_by_id.values()))
+            # alternatywnie:  active_tasks_list = [single for single in task_dict_by_id.values() if single.status == Status.ACTIVE]
+
+            for index, single in enumerate(active_tasks_list):  # numeruje poszczególne obiekty typu Task
+                print(f'Numer zadania: {index+1}')
+                print(print_task(single))
+
+            task_choice = input('Podaj numer zadania, które chcesz zmodyfikować lub wciśnij ENTER, aby powrócić.')
+            print('')
+
+            if task_choice == '':  # wraca do poprzedniego menu
+                break
+            else:
+                try:
+                    task_index_choice = int(task_choice) - 1
+                    single_task_id = active_tasks_list[
+                        task_index_choice].id  # wyciąga id zadania, które zostało wybrane
+
+                    # przenosi do kolejnego menu
+                except:
+                    print('To nie jest poprawna komenda.')
+                    continue
+
+                single_task_action_choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n'
+                                                      ' 1 - Oznacz zadanie jako wykonane. \n'
+                                                      ' 2 - Zmień szczegóły zadania. \n'
+                                                      ' 3 - Usuń zadanie. \n'
+                                                      ' 4 - Wróć. \n'))
+
+                if single_task_action_choice == 1:  # oznacz jako wykonane
+
+                    update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
+                    task_dict_by_id[single_task_id] = update_task.copy(status=Status.DONE)
+                    self.save_dict()
+                    print('Zadanie zostało oznaczone jako wykonane.')
+                    break
+
+                elif single_task_action_choice == 2:  # zmień szczeczóły
+                    changes_menu = int(input(' 1 - Zmień nazwę zadania. \n'
+                                             ' 2 - Zmień opis zadania. \n'
+                                             ' 3 - Zmień datę zakończenia. \n'
+                                             ' 4 - Wróć. \n'))
+
+                    update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
+
+                    if changes_menu == 1:
+                        new_name = input('Podaj nową nazwę: \n')
+                        task_dict_by_id[single_task_id] = update_task.copy(name=new_name)
+                        self.save_dict()
+
+                    elif changes_menu == 2:
+                        new_description = input('Podaj nowy opis: \n')
+                        task_dict_by_id[single_task_id] = update_task.copy(description=new_description)
+                        self.save_dict()
+
+                    elif changes_menu == 3:
+                        new_end_date = input('Podaj datę zakończenia: \n')
+                        task_dict_by_id[single_task_id] = update_task.copy(end_date=parse_date(new_end_date))
+                        self.save_dict()
+
+                    else:
+                        break
+
+                elif single_task_action_choice == 3:  # usuń zadanie
+                    update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
+                    del task_dict_by_id[update_task.id]
+                    self.save_dict()
+                    print('Zadanie zostało usunięte.')
+                    break
+
+                elif single_task_action_choice == 4:
+                    break
+
+
+    def handle_tasks_archive(self):
+        tasks_archive = list(filter(lambda single: single.status == Status.DONE, self.tasks_by_id.values()))
+        for index, single in enumerate(tasks_archive):
+            print(f'Numer zadania: {index + 1}')
+            print(print_task(single))
+            print('')
+
 
 
 
@@ -138,110 +241,19 @@ class TaskActions:
                                '4 - Wyjdź.\n'))
 
             if choice == 1:                             #Dodaj nowe zadanie
-                name = input('Podaj nazwę zadania.\n')
-                description = input('Opisz zadanie.\n')
-                current_time = datetime.datetime.now()
-                end_date_input = input('Podaj datę zakończenia (rrrr-mm-dd): \n')
-                end_date = parse_date(end_date_input)
-                status = Status.ACTIVE
-                id = uuid.uuid4()
-
-                new_task = Task(name, description, current_time, end_date, status, id)
-                self.tasks_by_id[new_task.id] = new_task
-                self.save_dict()
+                self.handle_task_adding()
 
 
 
 
             elif choice == 2:                           # Zobacz aktywne zadania
-                while True:
-                    task_dict_by_id = self.tasks_by_id
-                    active_tasks_list = list(filter(lambda single: (single.status == Status.ACTIVE) or (single.status == Status.EXPIRED), task_dict_by_id.values()))
-        # alternatywnie:  active_tasks_list = [single for single in task_dict_by_id.values() if single.status == Status.ACTIVE]
-
-                    for index, single in enumerate(active_tasks_list):  #numeruje poszczególne obiekty typu Task
-                        print(f'Numer zadania: {index+1}')
-                        print(print_task(single))
-
-
-                    task_choice = input('\n Podaj numer zadania, które chcesz zmodyfikować lub wciśnij ENTER, aby powrócić. \n')
-
-                    if task_choice == '': #wraca do poprzedniego menu
-                        break
-                    else:
-                        try:
-                            task_index_choice = int(task_choice) -1
-                            single_task_id = active_tasks_list[task_index_choice].id  # wyciąga id zadania, które zostało wybrane
-
-                            # przenosi do kolejnego menu
-                        except:
-                            print('To nie jest poprawna komenda.')
-                            continue
-
-
-                        single_task_action_choice = int(input('Wpisz odpowiednią cyfrę, aby wybrać akcję:\n'
-                                                 ' 1 - Oznacz zadanie jako wykonane. \n'
-                                                 ' 2 - Zmień szczegóły zadania. \n'
-                                                 ' 3 - Usuń zadanie. \n'
-                                                 ' 4 - Wróć. \n'))
-
-                        if single_task_action_choice == 1:   #oznacz jako wykonane
-
-                            update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
-                            task_dict_by_id[single_task_id] = update_task.copy(status=Status.DONE)
-                            self.save_dict()
-                            print('Zadanie zostało oznaczone jako wykonane.')
-                            break
-
-
-                        elif single_task_action_choice == 2:  #zmień szczeczóły
-                            changes_menu = int(input(' 1 - Zmień nazwę zadania. \n'
-                                      ' 2 - Zmień opis zadania. \n'
-                                      ' 3 - Zmień datę zakończenia. \n'
-                                      ' 4 - Wróć. \n'))
-
-                            update_task = task_dict_by_id[single_task_id]  # wynajduje zadanie do zmienienia
-
-                            if changes_menu == 1:
-                                new_name = input('Podaj nową nazwę: \n')
-                                task_dict_by_id[single_task_id] = update_task.copy(name=new_name)
-                                self.save_dict()
-
-
-                            elif changes_menu == 2:
-                                new_description = input('Podaj nowy opis: \n')
-                                task_dict_by_id[single_task_id] = update_task.copy(description=new_description)
-                                self.save_dict()
-
-
-                            elif changes_menu == 3:
-                                new_end_date = input('Podaj datę zakończenia: \n')
-                                task_dict_by_id[single_task_id] = update_task.copy(end_date=parse_date(new_end_date))
-                                self.save_dict()
-
-
-                            else:
-                                break
-
-                        elif single_task_action_choice == 3:    #usuń zadanie
-                            update_task = task_dict_by_id[single_task_id]  #wynajduje zadanie do zmienienia
-                            del task_dict_by_id[update_task.id]
-                            self.save_dict()
-                            print('Zadanie zostało usunięte.')
-                            break
-
-                        elif single_task_action_choice == 4:
-                            break
+                self.handle_task_body()
 
 
 
             elif choice == 3:   #archiwum zadań
+                self.handle_tasks_archive()
 
-                tasks_archive = list(filter(lambda single:single.status == Status.DONE, self.tasks_by_id.values()))
-                for index, single in enumerate(tasks_archive):
-                    print(f'Numer zadania: {index + 1}')
-                    print(print_task(single))
-                    print('')
 
 
             elif choice == 4:
