@@ -4,7 +4,7 @@ from enum import Enum
 import uuid
 
 
-def parse_date(date: str):   #zamienia str daty na datetime
+def parse_date(date: str):
     return datetime.datetime.strptime(date, '%Y-%m-%d')
 
 
@@ -47,7 +47,7 @@ class Task:
             'status': self.status.value,
             'id': str(self.id)
         }
-        return json.dumps(self_dict)  # powstaje string
+        return json.dumps(self_dict)
 
     @staticmethod
     def deserialize(string):
@@ -63,7 +63,6 @@ class Status(Enum):
     ACTIVE = 1
     DONE = 2
     EXPIRED = 3
-    # CANCELED = 4
 
     def __str__(self):
         if self == Status.ACTIVE:
@@ -72,8 +71,6 @@ class Status(Enum):
             return 'ZROBIONE'
         elif self == Status.EXPIRED:
             return 'PO TERMINIE'
-        # elif self == Status.CANCELED:
-        #     return 'ANULOWANE'
 
 
 class TaskActions:
@@ -94,9 +91,8 @@ class TaskActions:
         for single in reactivated_tasks_list:
             self.task_change_and_save(single.id, status=Status.ACTIVE)
 
-
     def read_all_tasks(self):
-        tasks_by_id = {}                              # słownik
+        tasks_by_id = {}
         try:
             with open(self.file_path, 'r') as file:
                 while True:
@@ -119,7 +115,6 @@ class TaskActions:
             for dict_task in self.tasks_by_id.values():
                 file.write(dict_task.serialize() + '\n')
 
-
     def handle_task_adding(self):
         name = input('Podaj nazwę zadania.\n')
         description = input('Opisz zadanie.\n')
@@ -139,19 +134,19 @@ class TaskActions:
                 filter(lambda single: (single.status == Status.ACTIVE) or (single.status == Status.EXPIRED),
                        self.tasks_by_id.values()))
 
-            for index, single in enumerate(active_tasks_list):  # numeruje poszczególne obiekty typu Task
+            for index, single in enumerate(active_tasks_list):
                 print(f'Numer zadania: {index+1}')
                 print(print_task(single))
 
             task_choice = input('Podaj numer zadania, które chcesz zmodyfikować lub wciśnij ENTER, aby powrócić.')
             print('')
 
-            if task_choice == '':  # wraca do poprzedniego menu
+            if task_choice == '':
                 break
             else:
                 try:
                     task_index_choice = int(task_choice) - 1
-                    single_task_id = active_tasks_list[task_index_choice].id  # wyciąga id zadania, które zostało wybrane
+                    single_task_id = active_tasks_list[task_index_choice].id
                 except:
                     print('To nie jest poprawna komenda. \n')
                     continue
@@ -162,13 +157,13 @@ class TaskActions:
                                                       ' 3 - Usuń zadanie. \n'
                                                       ' 4 - Wróć. \n'))
 
-                if single_task_action_choice == 1:  # oznacz jako wykonane
+                if single_task_action_choice == 1:
 
                     self.task_change_and_save(single_task_id, status=Status.DONE)
                     print('Zadanie zostało oznaczone jako wykonane. \n')
                     break
 
-                elif single_task_action_choice == 2:  # zmień szczeczóły
+                elif single_task_action_choice == 2:
                     changes_menu = int(input(' 1 - Zmień nazwę zadania. \n'
                                              ' 2 - Zmień opis zadania. \n'
                                              ' 3 - Zmień datę zakończenia. \n'
@@ -190,20 +185,17 @@ class TaskActions:
                     else:
                         break
 
-                elif single_task_action_choice == 3:  # usuń zadanie
+                elif single_task_action_choice == 3:
                     self.delete_task(single_task_id)
                     break
 
                 elif single_task_action_choice == 4:
                     break
 
-
-
     def delete_task(self, single_task_id):
         del self.tasks_by_id[single_task_id]
         self.save_dict()
         print('Zadanie zostało usunięte. \n')
-
 
     def task_change_and_save(self, single_task_id, name=None, description=None, end_date=None, status=None):
         update_task = self.tasks_by_id[single_task_id]
@@ -220,7 +212,6 @@ class TaskActions:
             print(print_task(single))
             print('')
 
-
     def menu(self):
 
         while True:
@@ -231,22 +222,21 @@ class TaskActions:
                                    '3 - Archiwum zadań.\n'
                                    '4 - Wyjdź.\n'))
 
-                if choice == 1:                             #Dodaj nowe zadanie
+                if choice == 1:                             # add new task
                     self.handle_task_adding()
 
-                elif choice == 2:                           # Zobacz aktywne zadania
+                elif choice == 2:                           # active tasks
                     self.handle_task_body()
 
-                elif choice == 3:   #archiwum zadań
+                elif choice == 3:                           # tasks archive
                     self.handle_tasks_archive()
 
-                elif choice == 4:
-                    break  # Wyjdź
+                elif choice == 4:                           # end program
+                    break
             except KeyError:
                 print('Nieprawidłowa komenda.\n')
             except ValueError:
                 print('Nieprawidłowy format daty.\n')
-
 
 
 if __name__ == '__main__':
